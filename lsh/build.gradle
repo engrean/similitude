@@ -1,0 +1,8 @@
+apply plugin: 'groovy'
+version = "1.0"
+
+description = "LSH for blocking similar sets together."
+
+dependencies {
+  compile('com.google.guava:guava:18.0')
+}

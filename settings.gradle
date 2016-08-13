@@ -1,0 +1,4 @@
+include 'lsh'
+include 'spark'
+
+rootProject.name = 'similitude'
