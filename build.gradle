@@ -1,20 +1,21 @@
 defaultTasks 'test', 'jar'
-allprojects {
-}
+
 subprojects {
     apply plugin: 'groovy'
     group = 'com.qlm.similitude'
     version = '1.0'
     repositories {
-        jcenter()
+        maven {
+            url "http://packages.confluent.io/maven/"
+        }
+        mavenCentral()
     }
     dependencies {
         testCompile(
             'junit:junit:4.12',
             'org.codehaus.groovy:groovy-all:2.4.4',
             'org.spockframework:spock-core:1.0-groovy-2.4',
-            "org.hamcrest:hamcrest-core:1.3",
-            
+            "org.hamcrest:hamcrest-core:1.3"
         )
         testRuntime(
             "cglib:cglib-nodep:3.1",
