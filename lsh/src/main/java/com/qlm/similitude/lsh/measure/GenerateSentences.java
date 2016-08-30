@@ -40,7 +40,7 @@ public class GenerateSentences {
                                                final int maxSentSize, final int numSentences, final Writer writer) throws IOException {
     String prefix;
     for (int i = 0; i < numSentences; i++) {
-      prefix = i+"\t";
+      prefix = i+",";
       writer.append(prefix).append(generateSentence(topWords, randomWord, randomSentenceSize.nextInt(maxSentSize - minSentSize) + minSentSize));
       writer.append("\n");
     }

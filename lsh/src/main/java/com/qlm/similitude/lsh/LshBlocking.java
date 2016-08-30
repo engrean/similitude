@@ -3,8 +3,8 @@ package com.qlm.similitude.lsh;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
-import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -17,6 +17,7 @@ import java.util.*;
 public class LshBlocking implements Serializable {
 
   private static final HashFunction murmur3 = Hashing.murmur3_32();
+  private static final HashFunction md5 = Hashing.md5();
   private static final Charset UTF8 = Charset.defaultCharset();
 
   private final int numHashFunctions;
@@ -36,7 +37,7 @@ public class LshBlocking implements Serializable {
     }
   }
 
-  public Set<String> lsh(String...values) throws IOException {
+  public Set<String> lsh(String...values) {
     return new HashSet<>(bandsToStrings(lsh(hashValues(values))));
   }
 
@@ -132,7 +133,7 @@ public class LshBlocking implements Serializable {
     return rst ^ hashFunctions[hashFunction - 1];
   }
 
-  static List<String> bandsToStrings(int[][] lsh) {
+  List<String> bandsToStrings(int[][] lsh) {
     List<String> vals = new ArrayList<>();
     if (lsh != null) {
       for (int[] band : lsh) {
@@ -142,7 +143,7 @@ public class LshBlocking implements Serializable {
     return vals;
   }
 
-  static String bandToString(int[] hashCodes) {
+  private String bandToString(int[] hashCodes) {
     StringBuilder builder = new StringBuilder();
     if (hashCodes != null) {
       for (int i : hashCodes) {
@@ -152,6 +153,11 @@ public class LshBlocking implements Serializable {
         builder.append(Integer.toHexString(i));
       }
     }
-    return builder.toString();
+    String s = builder.toString();
+    if (s.length() > 0) {
+      s = new BigInteger(1, md5.hashString(s, UTF8).asBytes()).toString(36);
+    }
+    return s;
   }
+
 }

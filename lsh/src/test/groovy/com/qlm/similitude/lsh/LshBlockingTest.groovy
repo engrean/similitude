@@ -5,9 +5,11 @@ import spock.lang.Specification
 
 class LshBlockingTest extends Specification {
 
+  LshBlocking lshBlocking = new LshBlocking(12, 2)
+
   def 'bandsToString null'() {
     when:
-    def hash = LshBlocking.bandsToStrings(null)
+    def hash = lshBlocking.bandsToStrings(null)
 
     then:
     hash.size() == 0
@@ -15,7 +17,7 @@ class LshBlockingTest extends Specification {
 
   def 'bandsToString empty list'() {
     when:
-    def hash = LshBlocking.bandsToStrings([] as int[][])
+    def hash = lshBlocking.bandsToStrings([] as int[][])
 
     then:
     hash.size() == 0
@@ -23,7 +25,7 @@ class LshBlockingTest extends Specification {
 
   def 'bandToString null'() {
     when:
-    def hash = LshBlocking.bandToString(null)
+    def hash = lshBlocking.bandToString(null)
 
     then:
     hash == ''
@@ -31,7 +33,7 @@ class LshBlockingTest extends Specification {
 
   def 'bandToString empty list'() {
     when:
-    def hash = LshBlocking.bandToString([] as int[])
+    def hash = lshBlocking.bandToString([] as int[])
 
     then:
     hash == ''
@@ -39,16 +41,16 @@ class LshBlockingTest extends Specification {
 
   def 'bandToString'() {
     when:
-    def hash = LshBlocking.bandToString([v1, v2, v3, v4] as int[])
+    def hash = lshBlocking.bandToString([v1, v2, v3, v4] as int[])
 
     then:
     hash == expected
 
     where:
     expected  | v1 | v2 | v3 | v4
-    '0-0-0-0' | 0  | 0  | 0  | 0
-    '9-9-9-9' | 9  | 9  | 9  | 9
-    'a-0-1-b' | 10 | 0  | 1  | 11
+    '1gdu942ocholazjb177dj9w94' | 0  | 0  | 0  | 0
+    'af6g99jkm86qx71db368ilp1e' | 9  | 9  | 9  | 9
+    'cph95hjwk0jyp7seso3i8axec' | 10 | 0  | 1  | 11
   }
 
   def 'lsh 2 hashes 1 band'() {

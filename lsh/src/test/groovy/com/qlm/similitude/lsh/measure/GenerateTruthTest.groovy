@@ -79,18 +79,18 @@ class GenerateTruthTest extends Specification {
 
   def 'loadSentences: loads in all sentences'() {
     given:
-    String contents = """0\tone two three
-1\tfour five six
-2\tthree five one
+    String contents = """0,one two three
+1,four five six
+2,three five one
 """
     when:
     def words = loadSentences(stringToBufferedReader(contents))
 
     then:
     words.size() == 3
-    words[0] == 'one two three'
-    words[1] == 'four five six'
-    words[2] == 'three five one'
+    words[0] == ['one', 'two', 'three'] as Set<String>
+    words[1] == ['four', 'five', 'six'] as Set<String>
+    words[2] == ['three', 'five', 'one'] as Set<String>
   }
 
   private static BufferedReader stringToBufferedReader(String contents) {

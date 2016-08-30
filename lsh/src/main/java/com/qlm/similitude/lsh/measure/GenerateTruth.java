@@ -12,7 +12,7 @@ public class GenerateTruth {
     String outFile = args[1];
     try (BufferedReader br = new BufferedReader(new FileReader(sentencesFile))) {
       System.out.println("Reading sentences into cache");
-      List<Set<String>> sentences = br.lines().map(line -> new HashSet<>(Arrays.asList(line.split("\t")[1].split(" ")))).collect(Collectors.toList());
+      List<Set<String>> sentences = loadSentences(br);
       System.out.println("DONE: Reading sentences into cache");
       File outF = new File(outFile);
       outF.delete();
@@ -39,10 +39,10 @@ public class GenerateTruth {
     }
   }
 
-  public static List<String> loadSentences(BufferedReader reader) throws FileNotFoundException {
-    List<String> sentences;
+  public static List<Set<String>> loadSentences(BufferedReader reader) throws FileNotFoundException {
+    List<Set<String>> sentences;
     if (reader != null) {
-      sentences = reader.lines().map(line -> line.split("\t")[1]).collect(Collectors.toList());
+      sentences = reader.lines().map(line -> new HashSet<>(Arrays.asList(line.split(",")[1].split(" ")))).collect(Collectors.toList());
     } else {
       sentences = new ArrayList<>(0);
     }

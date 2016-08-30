@@ -1,4 +1,4 @@
-defaultTasks 'test', 'jar'
+defaultTasks 'test', 'jar', 'shadowJar'
 
 subprojects {
     apply plugin: 'groovy'
@@ -22,4 +22,10 @@ subprojects {
             "org.objenesis:objenesis:2.1"
         )
     }
+}
+
+project(':kafka-streams') {
+  dependencies {
+    compile project(':lsh')
+  }
 }
