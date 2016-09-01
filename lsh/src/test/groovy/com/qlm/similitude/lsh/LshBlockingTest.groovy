@@ -5,7 +5,7 @@ import spock.lang.Specification
 
 class LshBlockingTest extends Specification {
 
-  LshBlocking lshBlocking = new LshBlocking(12, 2)
+  LshBlocking lshBlocking = new LshBlocking(12, 2, false, false)
 
   def 'bandsToString null'() {
     when:
@@ -40,6 +40,8 @@ class LshBlockingTest extends Specification {
   }
 
   def 'bandToString'() {
+    given:
+    lshBlocking = new LshBlocking(12, 2, false, true)
     when:
     def hash = lshBlocking.bandToString([v1, v2, v3, v4] as int[])
 
@@ -48,9 +50,39 @@ class LshBlockingTest extends Specification {
 
     where:
     expected  | v1 | v2 | v3 | v4
-    '1gdu942ocholazjb177dj9w94' | 0  | 0  | 0  | 0
-    'af6g99jkm86qx71db368ilp1e' | 9  | 9  | 9  | 9
-    'cph95hjwk0jyp7seso3i8axec' | 10 | 0  | 1  | 11
+    'GJQrdBBfioZbQr0V2dKCiA' | 0  | 0  | 0  | 0
+    'sAi6wxULIhmRZAN2ljYEAg' | 9  | 9  | 9  | 9
+    '1qY4WDoQYuMeROGpWVuHlA' | 10 | 0  | 1  | 11
+  }
+
+  def 'lsh 3 hashes 2 rows shiftKey'() {
+    def lsh = new LshBlocking(3, 2, true, true)
+
+    when:
+    int[][] minHash = lsh.lsh([2, 3, 4, 5, 1, 2, 3] as int[])
+
+    then:
+    minHash.length == 2
+    minHash[0].length == 2
+    minHash[0][0] == 1
+    minHash[0][1] == 3
+    minHash[1].length == 2
+    minHash[1][0] == 0
+    minHash[1][1] == 0
+  }
+
+  def 'lsh 10 hashes 3 rows shiftKey'() {
+    def lsh = new LshBlocking(10, 3, true, true)
+
+    when:
+    int[][] minHash = lsh.lsh([2, 3, 4, 5, 1, 2, 3] as int[])
+
+    then:
+    minHash.length == 8
+    minHash[0].length == 3
+    minHash[0][0] == 1
+    minHash[0][1] == 3
+    minHash[0][2] == 3
   }
 
   def 'lsh 2 hashes 1 band'() {

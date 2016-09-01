@@ -14,7 +14,7 @@ defaultTasks 'shadowJar'
 
 version = "1.0"
 //noinspection GroovyUnusedAssignment
-mainClassName='com.qlm.similitude.kafkastreams.play.WordCount'
+mainClassName='com.qlm.similitude.kafkastreams.measure.Blocking'
 description = "Various computing tools for lsh keys and evaluating the results compared to the truth."
 
 dependencies {
@@ -24,6 +24,5 @@ dependencies {
     'org.apache.kafka:kafka-streams:0.10.0.0-cp1',
     'io.confluent:kafka-avro-serializer:3.0.0',
     'org.slf4j:slf4j-api:1.7.12'
-
   )
 }

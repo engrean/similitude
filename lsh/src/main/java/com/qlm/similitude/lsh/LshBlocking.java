@@ -2,9 +2,9 @@ package com.qlm.similitude.lsh;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.google.common.io.BaseEncoding;
 
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -18,16 +18,25 @@ public class LshBlocking implements Serializable {
 
   private static final HashFunction murmur3 = Hashing.murmur3_32();
   private static final HashFunction md5 = Hashing.md5();
+  private static final BaseEncoding encoder = BaseEncoding.base64().omitPadding();
   private static final Charset UTF8 = Charset.defaultCharset();
 
   private final int numHashFunctions;
   private final int numBands;
   private final int[] hashFunctions;
+  private final boolean shiftKey;
+  private final boolean compressKey;
 
   public LshBlocking(int numHashFunctions, int numBands) {
-    if (numHashFunctions % numBands > 0) {
+    this(numHashFunctions, numBands, false, false);
+  }
+
+  public LshBlocking(int numHashFunctions, int numBands, boolean shiftKey, boolean compressKey) {
+    if (numHashFunctions % numBands > 0 && !shiftKey) {
       throw new IllegalArgumentException("The the number of hash functions must be evenly divisible by the number of bands");
     }
+    this.compressKey = compressKey;
+    this.shiftKey = shiftKey;
     this.numHashFunctions = numHashFunctions;
     this.numBands = numBands;
     hashFunctions = new int[numHashFunctions - 1];
@@ -48,22 +57,38 @@ public class LshBlocking implements Serializable {
    * @return a two dimensional array where the first dimension is the band and the second dimension is the minhash rows for that band
    */
   public int[][] lsh(int[] values) {
-    int numRows = numHashFunctions / numBands;
-    int[][] lsh = new int[numBands][numRows];
-    int[] minHash = minHash(values);
-    if (numBands > 1) {
-      int[] tmpHash = new int[numRows];
-      int row = 0;
-      for (int i = 0; i < numHashFunctions; i++) {
-        tmpHash[i % numRows] = minHash[i];
-        if (i % numRows == numRows - 1) {
-          lsh[row++] = tmpHash;
-          tmpHash = new int[numRows];
+    int[][] lsh;
+    if (shiftKey) {
+      int numRows = numBands;
+      int numKeys = numHashFunctions - numRows + 1;
+      lsh = new int[numKeys][numRows];
+      int[] minHash = minHash(values);
+      if (numKeys > 1) {
+        int row = 0;
+        for (int i = 0; i < numHashFunctions-numRows; i++) {
+          lsh[row++] = Arrays.copyOfRange(minHash, i, numRows+i);
+        }
+      } else {
+        lsh[0] = minHash;
+      }
+    } else {
+      int numRows = numHashFunctions / numBands;
+      lsh = new int[numBands][numRows];
+      int[] minHash = minHash(values);
+      if (numBands > 1) {
+        int[] tmpHash = new int[numRows];
+        int row = 0;
+        for (int i = 0; i < numHashFunctions; i++) {
+          tmpHash[i % numRows] = minHash[i];
+          if (i % numRows == numRows - 1) {
+            lsh[row++] = tmpHash;
+            tmpHash = new int[numRows];
+          }
         }
       }
-    }
-    else {
-      lsh[0] = minHash;
+      else {
+        lsh[0] = minHash;
+      }
     }
     return lsh;
   }
@@ -143,7 +168,7 @@ public class LshBlocking implements Serializable {
     return vals;
   }
 
-  private String bandToString(int[] hashCodes) {
+  String bandToString(int[] hashCodes) {
     StringBuilder builder = new StringBuilder();
     if (hashCodes != null) {
       for (int i : hashCodes) {
@@ -154,8 +179,8 @@ public class LshBlocking implements Serializable {
       }
     }
     String s = builder.toString();
-    if (s.length() > 0) {
-      s = new BigInteger(1, md5.hashString(s, UTF8).asBytes()).toString(36);
+    if (compressKey && s.length() > 0) {
+      s = encoder.encode(md5.hashString(s, UTF8).asBytes());
     }
     return s;
   }

@@ -29,3 +29,9 @@ project(':kafka-streams') {
     compile project(':lsh')
   }
 }
+
+project(':spark') {
+  dependencies {
+    compile project(':lsh')
+  }
+}

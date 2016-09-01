@@ -1,4 +1,4 @@
-package com.qlm.similitude.kafkastreams.play;
+package com.qlm.similitude.kafkastreams.measure;
 
 import com.qlm.similitude.lsh.LshBlocking;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -14,8 +14,9 @@ import org.apache.kafka.streams.kstream.internals.WindowedDeserializer;
 import org.apache.kafka.streams.kstream.internals.WindowedSerializer;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class WordCount {
+public class Blocking {
   public static void main(String[] args) throws Exception {
     Properties props = new Properties();
     props.put(StreamsConfig.APPLICATION_ID_CONFIG, "streams-wordcount");
@@ -25,6 +26,7 @@ public class WordCount {
 
     // setting offset reset to earliest so that we can re-run the demo code with the same pre-loaded data
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+//    props.put("num.stream.threads", "4");
 
     KStreamBuilder builder = new KStreamBuilder();
 
@@ -35,17 +37,32 @@ public class WordCount {
     WindowedSerializer<String> windowedSerializer = new WindowedSerializer<>(stringSerializer);
     WindowedDeserializer<String> windowedDeserializer = new WindowedDeserializer<>(stringDeserializer);
     Serde<Windowed<String>> windowedSerde = Serdes.serdeFrom(windowedSerializer, windowedDeserializer);
-    final KTable<Windowed<String>, String> blockKeys = source
-      .flatMap(new BlockSentences(20, 4))
+    source
+      .flatMap(new BlockSentences(40, 4))
       .map((key, value)->new KeyValue<>(value, key.toString()))
-      .reduceByKey(new CombineIds(), TimeWindows.of("reduce-blocks", 20000).advanceBy(20000))
-      .filter((key, value)->value.split(",").length > 1);
-    blockKeys.to(windowedSerde, Serdes.String(), "streams-blocks");
+      .reduceByKey(new CombineIds(), TimeWindows.of("streams-blocks-reduce", 20000).advanceBy(20000))
+      .to(windowedSerde, Serdes.String(), "streams-blocks");
+
+    final KStream<String, String> streamBlocks = builder.stream("streams-blocks");
+    streamBlocks.flatMapValues(value->{
+        String[] ids = value.split(",");
+        Arrays.sort(ids);
+        List<String> pairs = new ArrayList<>();
+        for (int i = 0; i < ids.length; i++) {
+          for (int j = i+1; j < ids.length; j++) {
+            pairs.add(ids[i] + "\t" + ids[j]);
+          }
+        }
+        return pairs;
+      })
+      .map((key, value)->new KeyValue<>(value, -1))
+      .reduceByKey((value1, value2)->value1, TimeWindows.of("reduce-pairs", 40000).advanceBy(40000), Serdes.String(), Serdes.Integer())
+      .to(windowedSerde, Serdes.Integer(), "block-pairs");
 
     KafkaStreams streams = new KafkaStreams(builder, props);
     streams.start();
 
-    Thread.sleep(50000L);
+    Thread.sleep(90000L);
 
     streams.close();
   }
@@ -62,9 +79,7 @@ public class WordCount {
       final Set<String> blocks = blocking.lsh(value.toLowerCase(Locale.getDefault()).split(" "));
       List<KeyValue<Long, String>> kvs = new ArrayList<>();
       Long k = Long.parseLong(key);
-      for (String block: blocks) {
-        kvs.add(new KeyValue<>(k, block));
-      }
+      kvs.addAll(blocks.stream().map(block->new KeyValue<>(k, block)).collect(Collectors.toList()));
       return kvs;
     }
   }
