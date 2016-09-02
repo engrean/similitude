@@ -1,13 +1,13 @@
 package com.qlm.similitude.spark;
 
-import com.qlm.similitude.lsh.LshBlocking;
+import com.qlm.similitude.spark.functions.GeneratePairs;
+import com.qlm.similitude.spark.functions.LshBlock;
+import com.qlm.similitude.spark.rdd.MatchPair;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.api.java.function.PairFunction;
-import scala.Serializable;
 import scala.Tuple2;
 
 import java.text.DecimalFormat;
@@ -15,7 +15,6 @@ import java.util.*;
 
 @SuppressWarnings("WeakerAccess") public class LshBlockAndEval {
 
-  private static final DecimalFormat precisionFormatter = new DecimalFormat("#.##");
 
   public static void main(String[] args) {
 
@@ -36,15 +35,15 @@ import java.util.*;
           docIds.add(docId);
         }
         return new Tuple2<>(blockKey._1(), docIds);
-      }).repartition(sc.defaultParallelism()).cache();
-    lshBlocks.saveAsTextFile("blocks");
+      }).repartition(sc.defaultParallelism());
+
     final JavaPairRDD<String, Double> lshPairs = lshBlocks
       .flatMapToPair(new GeneratePairs())
       .distinct();
 //      .reduceByKey((Function2<Double, Double, Double>)(v1, v2)->v1);
 
 //    lshPairs.saveAsTextFile("lshPairs");
-    final Map<MatchRdd, Long> matches = sc
+    final Map<MatchPair, Long> matches = sc
       .textFile(truthIn)
       .mapToPair((PairFunction<String, String, Double>)truth->{
         String[] parts = truth.split("\t");
@@ -53,7 +52,7 @@ import java.util.*;
       .distinct()
       .union(lshPairs)
       .groupByKey()
-      .map((Function<Tuple2<String, Iterable<Double>>, MatchRdd>)truthAndBlock->{
+      .map((Function<Tuple2<String, Iterable<Double>>, MatchPair>)truthAndBlock->{
         boolean blockFound = false;
         boolean truthFound = false;
         Double score = -1.0;
@@ -65,7 +64,7 @@ import java.util.*;
             score = d;
           }
         }
-        return new MatchRdd(score, blockFound, truthFound);
+        return new MatchPair(score, blockFound, truthFound);
 
       })
       .countByValue();
@@ -74,11 +73,11 @@ import java.util.*;
     sc.stop();
   }
 
-  protected static void printPRStats(Map<MatchRdd, Long> stats) {
+  protected static void printPRStats(Map<MatchPair, Long> stats) {
     Map<Double, MatchCounts> scorePrs = new HashMap<>();
     MatchCounts mc;
     Long wastedCompares = 0L;
-    for (MatchRdd key: stats.keySet()) {
+    for (MatchPair key: stats.keySet()) {
       if (scorePrs.containsKey(key.jaccardScore)) {
         mc = scorePrs.get(key.jaccardScore);
       } else {
@@ -115,15 +114,12 @@ import java.util.*;
     System.out.println("                 " + totalFound +"/"+ (totalNotFound+totalFound));
   }
 
-  protected static Double convertToHundreths(Double dble) {
-    return Double.valueOf(precisionFormatter.format(dble));
-  }
-
   protected static class MatchCounts {
     private double score;
     private long found;
     private long truthNotFound;
     private long blockNotFound;
+    private static final DecimalFormat precisionFormatter = new DecimalFormat("#.##");
 
     protected MatchCounts(double score) {
       this.score = score;
@@ -138,73 +134,12 @@ import java.util.*;
       }
       return  score + "\t" + recall + "\t" + found +"/" + ( truthNotFound + found);
     }
+
+    protected static Double convertToHundreths(Double dble) {
+      return Double.valueOf(precisionFormatter.format(dble));
+    }
+
   }
 
-  protected static class LshBlock implements PairFlatMapFunction<String, String, Integer> {
-
-    final private LshBlocking lshBlocking;
-
-    protected LshBlock(int numHashFunctions, int rowsPerBand, boolean shiftKey, boolean compressKey) {
-      lshBlocking = new LshBlocking(numHashFunctions, numHashFunctions/rowsPerBand, shiftKey, compressKey);
-    }
-
-    @Override public Iterator<Tuple2<String, Integer>> call(String sentence) throws Exception {
-      String[] parts = sentence.split(",");
-      Integer docId = Integer.parseInt(parts[0]);
-      Set<String> lshKeys = lshBlocking.lsh(parts[1].split(" "));
-      List<Tuple2<String, Integer>> blocks = new ArrayList<>();
-      for (String block: lshKeys) {
-        blocks.add(new Tuple2<>(block, docId));
-      }
-      return blocks.iterator();
-    }
-  }
-
-  protected static class GeneratePairs implements PairFlatMapFunction<Tuple2<String, Set<Integer>>, String, Double> {
-    @Override public Iterator<Tuple2<String, Double>> call(Tuple2<String, Set<Integer>> block) throws Exception {
-      List<Tuple2<String, Double>> compares = new ArrayList<>();
-      Integer[] docs = new Integer[block._2().size()];
-      block._2().toArray(docs);
-      Arrays.sort(docs);
-      for (int i = 0; i < docs.length; i++) {
-        for (int j = i + 1; j < docs.length; j++) {
-          compares.add(new Tuple2<>(docs[i] + "|" + docs[j], -1.0));
-        }
-      }
-      return compares.iterator();
-    }
-  }
-
-  protected static class MatchRdd implements Serializable {
-    final private Double jaccardScore;
-    final private boolean blockFound;
-    final private boolean truthFound;
-
-    protected MatchRdd(Double jaccardScore, boolean blockFound, boolean truthFound) {
-      this.jaccardScore = jaccardScore;
-      this.blockFound = blockFound;
-      this.truthFound = truthFound;
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      boolean equal = false;
-      if (that != null && that instanceof  MatchRdd) {
-        MatchRdd tht = (MatchRdd)that;
-        equal = tht.jaccardScore.equals(jaccardScore) && tht.blockFound == blockFound && tht.truthFound == truthFound;
-      }
-      return equal;
-    }
-
-    @Override
-    public int hashCode() {
-      return jaccardScore.hashCode() * Boolean.valueOf(blockFound).hashCode() * Boolean.valueOf(truthFound).hashCode();
-    }
-
-    @Override
-    public String toString() {
-      return jaccardScore + "|" + blockFound + "|" + truthFound;
-    }
-  }
 
 }

@@ -6,6 +6,22 @@ import static com.qlm.similitude.lsh.measure.GenerateTruth.loadSentences
 
 class GenerateTruthTest extends Specification {
 
+  def 'compareSentences: four values one with scores below 0.3'() {
+    given:
+    List<Set<String>> sentences = []
+    sentences << new HashSet<>(["one", "two", "three"])
+    sentences << new HashSet<>(["two", "three", "four"])
+    sentences << new HashSet<>(["three", "four", "five"])
+    sentences << new HashSet<>(["four", "five", "six"])
+    StringWriter writer = new StringWriter()
+
+    when:
+    GenerateTruth.compareSentences(sentences[0], sentences, 1, writer, 0.3)
+
+    then:
+    writer.toString() == "0\t1\t0.5\t2/4\n"
+  }
+
   def 'compareSentences: four values one with score below 0.1'() {
     given:
     List<Set<String>> sentences = []
@@ -16,7 +32,7 @@ class GenerateTruthTest extends Specification {
     StringWriter writer = new StringWriter()
 
     when:
-    GenerateTruth.compareSentences(sentences[0], sentences, 1, writer)
+    GenerateTruth.compareSentences(sentences[0], sentences, 1, writer, 0.2)
 
     then:
     writer.toString() == """0\t1\t0.5\t2/4
@@ -33,7 +49,7 @@ class GenerateTruthTest extends Specification {
     StringWriter writer = new StringWriter()
 
     when:
-    GenerateTruth.compareSentences(sentences[0], sentences, 1, writer)
+    GenerateTruth.compareSentences(sentences[0], sentences, 1, writer, 0.2)
 
     then:
     writer.toString() == """0\t1\t0.5\t2/4
@@ -49,7 +65,7 @@ class GenerateTruthTest extends Specification {
     StringWriter writer = new StringWriter()
 
     when:
-    GenerateTruth.compareSentences(sentences[0], sentences, 1, writer)
+    GenerateTruth.compareSentences(sentences[0], sentences, 1, writer, 0.4)
 
     then:
     writer.toString() == """0\t1\t0.5\t2/4
@@ -63,7 +79,7 @@ class GenerateTruthTest extends Specification {
     StringWriter writer = new StringWriter()
 
     when:
-    GenerateTruth.compareSentences(sentences[0], sentences, 1, writer)
+    GenerateTruth.compareSentences(sentences[0], sentences, 1, writer, 0.3)
 
     then:
     !writer.toString()

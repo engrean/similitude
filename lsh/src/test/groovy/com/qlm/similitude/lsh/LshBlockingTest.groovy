@@ -67,22 +67,26 @@ class LshBlockingTest extends Specification {
     minHash[0][0] == 1
     minHash[0][1] == 3
     minHash[1].length == 2
-    minHash[1][0] == 0
-    minHash[1][1] == 0
+    minHash[1][0] == 3
+    minHash[1][1] == 3
   }
 
-  def 'lsh 10 hashes 3 rows shiftKey'() {
-    def lsh = new LshBlocking(10, 3, true, true)
+  def 'lsh 9 hashes 7 rows shiftKey'() {
+    def lsh = new LshBlocking(9, 7, true, false)
 
     when:
-    int[][] minHash = lsh.lsh([2, 3, 4, 5, 1, 2, 3] as int[])
+    int[] minHash = lsh.minHash([2, 3, 4, 5, 1, 2, 3] as int[])
+    def mhBlocks = lsh.bandToString(minHash)
+    int[][] lshBlocks = lsh.lsh([2, 3, 4, 5, 1, 2, 3] as int[])
+    def bands = lsh.bandsToStrings(lshBlocks).asList()
+    println mhBlocks
+    println bands
 
     then:
-    minHash.length == 8
-    minHash[0].length == 3
-    minHash[0][0] == 1
-    minHash[0][1] == 3
-    minHash[0][2] == 3
+    bands.size() == 3
+    bands[0].split('-').length == 7
+    bands[1].split('-').length == 7
+    bands[2].split('-').length == 7
   }
 
   def 'lsh 2 hashes 1 band'() {

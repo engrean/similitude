@@ -10,6 +10,7 @@ public class GenerateTruth {
   public static void main(String[] args) {
     String sentencesFile = args[0];
     String outFile = args[1];
+    Double minJaccardScore = Double.parseDouble(args[2]);
     try (BufferedReader br = new BufferedReader(new FileReader(sentencesFile))) {
       System.out.println("Reading sentences into cache");
       List<Set<String>> sentences = loadSentences(br);
@@ -19,7 +20,7 @@ public class GenerateTruth {
       try (BufferedWriter bw = new BufferedWriter(new FileWriter(outF))) {
         System.out.println("Scoring");
         for (int i = 0; i < sentences.size(); i++) {
-          compareSentences(sentences.get(i), sentences, i+1, bw);
+          compareSentences(sentences.get(i), sentences, i+1, bw, minJaccardScore);
         }
       }
     } catch (IOException ioe) {
@@ -28,12 +29,12 @@ public class GenerateTruth {
 
   }
 
-  public static void compareSentences(Set<String> xSet, List<Set<String>> sentences, int start, Writer bw) throws IOException {
+  public static void compareSentences(Set<String> xSet, List<Set<String>> sentences, int start, Writer bw, double minJaccardScore) throws IOException {
     int xStart = start - 1;
     JaccardSimilarity score;
     for (int i = start; i < sentences.size(); i++) {
       score = new JaccardSimilarity(xSet, xStart, sentences.get(i), i);
-      if (score.getScore() >= 0.2) {
+      if (score.getScore() >= minJaccardScore) {
         bw.append(new JaccardSimilarity(xSet, xStart, sentences.get(i), i).toString()).append("\n");
       }
     }
