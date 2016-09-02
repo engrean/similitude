@@ -17,7 +17,6 @@ import java.util.*;
 public class LshBlocking implements Serializable {
 
   private static final HashFunction murmur3 = Hashing.murmur3_32();
-  private static final HashFunction md5 = Hashing.md5();
   private static final BaseEncoding encoder = BaseEncoding.base64().omitPadding();
   private static final Charset UTF8 = Charset.defaultCharset();
 
