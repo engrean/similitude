@@ -11,6 +11,7 @@ This builds all jars including uber jars for the projects that need them.
 # To generate a testing and truth data set:
  
 Download the top 333k search terms or create a file for the random words you want to use in the following format:
+
 ```the	23135851162
 of	13151942776
 and	12997637966
@@ -36,6 +37,7 @@ data/sentences.txt is the file you want to write the sentences to
 
 
 The data looks like this:
+
 ```0,my all free but to more you that new if to of was new one or on for
 1,are with free have an if you one
 2,other be is this an for be we i not you a home on us this page
@@ -53,6 +55,7 @@ data/truth.txt is where the truth will be written to
 
 
 The data looks like:
+
 ```0	336	0.4	10/23
 0	682	0.4	8/20
 0	1255	0.4	8/20
