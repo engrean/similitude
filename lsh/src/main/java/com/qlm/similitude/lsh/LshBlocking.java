@@ -175,7 +175,8 @@ public class LshBlocking implements Serializable {
     }
     String s = builder.toString();
     if (compressKey && s.length() > 0) {
-      s = encoder.encode(md5.hashString(s, UTF8).asBytes());
+      s = encoder.encode(s.getBytes());
+//      s = encoder.encode(md5.hashString(s, UTF8).asBytes());
     }
     return s;
   }

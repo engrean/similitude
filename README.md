@@ -75,7 +75,7 @@ This command is a brute force compare. It takes a while.
 
 # Testing things out
 Install Spark 2.0 either locally or on a cluster. Installing it locally, means you just unzip/untar it in a directory and add SPARK_INSTALL/bin to your PATH.
-spark-submit --master local[4] spark/build/libs/spark-1.0-all.jar data/sentences.txt data/truth.txt 40 5 true false
+spark-submit --master local[4] spark/build/libs/spark-1.0-all.jar data/sentences.txt data/truth.txt 40 5 true false 256
 
 4 is the number of workers you want to concurrently run when in local spark mode
 data/sentences.txt is the file that contains the sentences you want to generate LSH keys for
@@ -84,6 +84,7 @@ data/truth.txt is the truth file
 5 is the number of rows (minhash values) you want in per hash key
 true/false is if you want to use a new shifting key feature idea I came up with. If you know what an ngram is, then think of ngraming the minhash key
 true/false is if you want to compress the LSH key down to a 23 character string. The more rows per band, the more savings this gives you. However, if you want smaller bands then this might actually increase the size of your key
+256 is the max number of ids that can fit in a block. After that, the block is marked as oversized by clearing out all ids and replacing them with a -1
 
 The output looks like:
 

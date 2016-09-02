@@ -18,21 +18,29 @@ import java.util.*;
 
   public static void main(String[] args) {
 
-    String sentencesIn = args[0];
-    String truthIn = args[1];
-    Integer numHashFuntions = Integer.parseInt(args[2]);
-    Integer rowsPerBand = Integer.parseInt(args[3]);
-    Boolean shiftKey = Boolean.parseBoolean(args[4]);
-    Boolean compressKey = Boolean.parseBoolean(args[5]);
-    JavaSparkContext sc = new JavaSparkContext();
+    final String sentencesIn = args[0];
+    final String truthIn = args[1];
+    final Integer numHashFunctions = Integer.parseInt(args[2]);
+    final Integer rowsPerBand = Integer.parseInt(args[3]);
+    final Boolean shiftKey = Boolean.parseBoolean(args[4]);
+    final Boolean compressKey = Boolean.parseBoolean(args[5]);
+    final Integer maxBlockSize = Integer.parseInt(args[6]);
+    final JavaSparkContext sc = new JavaSparkContext();
     final JavaRDD<String> sentences = sc.textFile(sentencesIn);
     final JavaPairRDD<String, List<Integer>> lshBlocks = sentences
-      .flatMapToPair(new LshBlock(numHashFuntions, rowsPerBand, shiftKey, compressKey))
+      .flatMapToPair(new LshBlock(numHashFunctions, rowsPerBand, shiftKey, compressKey))
       .groupByKey()
       .mapToPair((PairFunction<Tuple2<String, Iterable<Integer>>, String, List<Integer>>)blockKey->{
         List<Integer> docIds = new ArrayList<>();
+        int count = 0;
         for (Integer docId: blockKey._2()) {
-          docIds.add(docId);
+          if (count++ < maxBlockSize) {
+            docIds.add(docId);
+          } else {
+            docIds.clear();
+            docIds.add(-1);
+            break;
+          }
         }
         return new Tuple2<>(blockKey._1(), docIds);
       }).repartition(sc.defaultParallelism());

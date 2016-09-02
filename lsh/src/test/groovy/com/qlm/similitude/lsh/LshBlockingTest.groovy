@@ -39,6 +39,38 @@ class LshBlockingTest extends Specification {
     hash == ''
   }
 
+  def 'bandToString not compressed'() {
+    given:
+    lshBlocking = new LshBlocking(12, 12, false, false)
+    when:
+    def hash = lshBlocking.bandToString([v1, v2, v3, v4] as int[])
+
+    then:
+    hash == expected
+
+    where:
+    expected  | v1 | v2 | v3 | v4
+    '0-0-0-0' | 0  | 0  | 0  | 0
+    '9-9-9-9' | 9  | 9  | 9  | 9
+    'a-0-1-b' | 10 | 0  | 1  | 11
+  }
+
+  def 'bandToString compressed'() {
+    given:
+    lshBlocking = new LshBlocking(12, 2, false, true)
+    when:
+    def hash = lshBlocking.bandToString([v1, v2, v3, v4] as int[])
+
+    then:
+    hash == expected
+
+    where:
+    expected  | v1 | v2 | v3 | v4
+    'MC0wLTAtMA' | 0  | 0  | 0  | 0
+    'OS05LTktOQ' | 9  | 9  | 9  | 9
+    'YS0wLTEtYg' | 10 | 0  | 1  | 11
+  }
+
   def 'bandToString'() {
     given:
     lshBlocking = new LshBlocking(12, 2, false, true)
@@ -50,9 +82,9 @@ class LshBlockingTest extends Specification {
 
     where:
     expected  | v1 | v2 | v3 | v4
-    'GJQrdBBfioZbQr0V2dKCiA' | 0  | 0  | 0  | 0
-    'sAi6wxULIhmRZAN2ljYEAg' | 9  | 9  | 9  | 9
-    '1qY4WDoQYuMeROGpWVuHlA' | 10 | 0  | 1  | 11
+    'MC0wLTAtMA' | 0  | 0  | 0  | 0
+    'OS05LTktOQ' | 9  | 9  | 9  | 9
+    'YS0wLTEtYg' | 10 | 0  | 1  | 11
   }
 
   def 'lsh 3 hashes 2 rows shiftKey'() {
