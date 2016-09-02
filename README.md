@@ -34,12 +34,14 @@ where 30K_top_words.txt is used to seed the sentences with word
 20 is the max number of words in a sentence
 data/sentences.txt is the file you want to write the sentences to
 ```
+
 The data looks like this:
 ``` 0,my all free but to more you that new if to of was new one or on for
 1,are with free have an if you one
 2,other be is this an for be we i not you a home on us this page
 3,not can was are have it home information of not from be at but was page
 ```
+
 where the first column is the sentence key and the second column. I used comma-delimited to make it easier to load this data into Kafka so I can LSH stuff using Kafka Streams
 
 # To generate a truth set
@@ -49,6 +51,7 @@ java -jar lsh/build/libs/lsh-1.0.jar gen-truth data/sentences.txt data/truth.txt
 data/truth.txt is where the truth will be written to
 0.4 is the minimum jaccard similarity score the sentence pair must have to make it into the truth set
 ```
+
 The data looks like:
 ``` 0	336	0.4	10/23
 0	682	0.4	8/20
@@ -56,11 +59,13 @@ The data looks like:
 0	2577	0.5	10/20
 0	3152	0.4	9/21
 ```
+
 where the 1st column is a doc id (smaller ids should always be first)
 ``` the 2nd column is the other doc id
 the 3rd column is the Jaccard score
 the 4th colums is the the number of common set fields/the total number of unique set fields
 ```
+
 This command is a brute force compare. It takes a while.
 
 # Testing things out
@@ -75,6 +80,7 @@ data/truth.txt is the truth file
 true/false is if you want to use a new shifting key feature idea I came up with. If you know what an ngram is, then think of ngraming the minhash key
 true/false is if you want to compress the LSH key down to a 23 character string. The more rows per band, the more savings this gives you. However, if you want smaller bands then this might actually increase the size of your key
 ```
+
 The output looks like:
 
 ``` 0.2     0.06    225107/4073981
