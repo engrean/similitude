@@ -12,7 +12,8 @@ This builds all jars including uber jars for the projects that need them.
  
 Download the top 333k search terms or create a file for the random words you want to use in the following format:
 
-```the	23135851162
+```
+the	23135851162
 of	13151942776
 and	12997637966
 to	12136980858
@@ -38,7 +39,8 @@ data/sentences.txt is the file you want to write the sentences to
 
 The data looks like this:
 
-```0,my all free but to more you that new if to of was new one or on for
+```
+0,my all free but to more you that new if to of was new one or on for
 1,are with free have an if you one
 2,other be is this an for be we i not you a home on us this page
 3,not can was are have it home information of not from be at but was page
@@ -56,7 +58,8 @@ data/truth.txt is where the truth will be written to
 
 The data looks like:
 
-```0	336	0.4	10/23
+```
+0	336	0.4	10/23
 0	682	0.4	8/20
 0	1255	0.4	8/20
 0	2577	0.5	10/20
@@ -84,7 +87,8 @@ true/false is if you want to compress the LSH key down to a 23 character string.
 
 The output looks like:
 
-```0.2     0.06    225107/4073981
+```
+0.2     0.06    225107/4073981
 0.3	0.15	195752/1347864
 0.4	0.36	73983/203744
 0.5	0.68	11228/16403
