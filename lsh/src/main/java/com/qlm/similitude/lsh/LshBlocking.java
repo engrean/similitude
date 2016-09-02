@@ -22,23 +22,23 @@ public class LshBlocking implements Serializable {
   private static final Charset UTF8 = Charset.defaultCharset();
 
   private final int numHashFunctions;
-  private final int numBands;
+  private final int numRowsPerBand;
   private final int[] hashFunctions;
   private final boolean shiftKey;
   private final boolean compressKey;
 
   public LshBlocking(int numHashFunctions, int numBands) {
-    this(numHashFunctions, numBands, false, false);
-  }
-
-  public LshBlocking(int numHashFunctions, int numBands, boolean shiftKey, boolean compressKey) {
-    if (numHashFunctions % numBands > 0 && !shiftKey) {
+    this(numHashFunctions, numHashFunctions/numBands, false, false);
+    if (numHashFunctions % numBands > 0) {
       throw new IllegalArgumentException("The the number of hash functions must be evenly divisible by the number of bands");
     }
+  }
+
+  public LshBlocking(int numHashFunctions, int numRowsPerBand, boolean shiftKey, boolean compressKey) {
     this.compressKey = compressKey;
     this.shiftKey = shiftKey;
     this.numHashFunctions = numHashFunctions;
-    this.numBands = numBands;
+    this.numRowsPerBand = numRowsPerBand;
     hashFunctions = new int[numHashFunctions - 1];
     final Random random = new Random(63689);
     for (int i = 0; i < numHashFunctions - 1; i++) {
@@ -57,38 +57,33 @@ public class LshBlocking implements Serializable {
    * @return a two dimensional array where the first dimension is the band and the second dimension is the minhash rows for that band
    */
   public int[][] lsh(int[] values) {
-    int[][] lsh;
+
+    int[] minHash = minHash(values);
+
+    int numBands;
     if (shiftKey) {
-      int numRows = numBands;
-      int numKeys = numHashFunctions - numRows + 1;
-      lsh = new int[numKeys][numRows];
-      int[] minHash = minHash(values);
-      if (numKeys > 1) {
-        int row = 0;
-        for (int i = 0; i < numHashFunctions-numRows; i++) {
-          lsh[row++] = Arrays.copyOfRange(minHash, i, numRows+i);
-        }
-      } else {
-        lsh[0] = minHash;
+      numBands = numHashFunctions - numRowsPerBand + 1;
+    } else {
+      numBands = numHashFunctions/numRowsPerBand;
+    }
+    int[][] lsh = new int[numBands][numRowsPerBand];
+
+    if (numBands == 1) {
+      lsh[0] = minHash;
+    } else if (shiftKey) {
+      for (int i = 0; i <= numHashFunctions-numRowsPerBand; i++) {
+        lsh[i] = Arrays.copyOfRange(minHash, i, numRowsPerBand+i);
       }
     } else {
-      int numRows = numHashFunctions / numBands;
-      lsh = new int[numBands][numRows];
-      int[] minHash = minHash(values);
-      if (numBands > 1) {
-        int[] tmpHash = new int[numRows];
+        int[] tmpHash = new int[numRowsPerBand];
         int row = 0;
         for (int i = 0; i < numHashFunctions; i++) {
-          tmpHash[i % numRows] = minHash[i];
-          if (i % numRows == numRows - 1) {
+          tmpHash[i % numRowsPerBand] = minHash[i];
+          if (i % numRowsPerBand == numRowsPerBand - 1) {
             lsh[row++] = tmpHash;
-            tmpHash = new int[numRows];
+            tmpHash = new int[numRowsPerBand];
           }
         }
-      }
-      else {
-        lsh[0] = minHash;
-      }
     }
     return lsh;
   }
