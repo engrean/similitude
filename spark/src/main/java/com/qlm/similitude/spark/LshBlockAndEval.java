@@ -26,11 +26,11 @@ import java.util.*;
     Boolean compressKey = Boolean.parseBoolean(args[5]);
     JavaSparkContext sc = new JavaSparkContext();
     final JavaRDD<String> sentences = sc.textFile(sentencesIn);
-    final JavaPairRDD<String, Set<Integer>> lshBlocks = sentences
+    final JavaPairRDD<String, List<Integer>> lshBlocks = sentences
       .flatMapToPair(new LshBlock(numHashFuntions, rowsPerBand, shiftKey, compressKey))
       .groupByKey()
-      .mapToPair((PairFunction<Tuple2<String, Iterable<Integer>>, String, Set<Integer>>)blockKey->{
-        Set<Integer> docIds = new HashSet<>();
+      .mapToPair((PairFunction<Tuple2<String, Iterable<Integer>>, String, List<Integer>>)blockKey->{
+        List<Integer> docIds = new ArrayList<>();
         for (Integer docId: blockKey._2()) {
           docIds.add(docId);
         }

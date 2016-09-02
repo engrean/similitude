@@ -5,16 +5,14 @@ import scala.Tuple2;
 
 import java.util.*;
 
-public class GeneratePairs implements PairFlatMapFunction<Tuple2<String, Set<Integer>>, String, Double> {
+public class GeneratePairs implements PairFlatMapFunction<Tuple2<String, List<Integer>>, String, Double> {
 
-  @Override public Iterator<Tuple2<String, Double>> call(Tuple2<String, Set<Integer>> block) throws Exception {
+  @Override public Iterator<Tuple2<String, Double>> call(Tuple2<String, List<Integer>> block) throws Exception {
     List<Tuple2<String, Double>> compares = new ArrayList<>();
-    Integer[] docs = new Integer[block._2().size()];
-    block._2().toArray(docs);
-    Arrays.sort(docs);
-    for (int i = 0; i < docs.length; i++) {
-      for (int j = i + 1; j < docs.length; j++) {
-        compares.add(new Tuple2<>(docs[i] + "|" + docs[j], -1.0));
+    block._2().sort((o1, o2)->( o1 < o2 ? -1 : (o1 > o2 ? 1 : 0)));
+    for (int i = 0; i < block._2().size(); i++) {
+      for (int j = i + 1; j < block._2().size(); j++) {
+        compares.add(new Tuple2<>(block._2().get(i) + "|" + block._2().get(j), -1.0));
       }
     }
     return compares.iterator();
