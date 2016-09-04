@@ -75,16 +75,17 @@ This command is a brute force compare. It takes a while.
 
 # Testing things out via Flink (it seems to be considerably faster than Spark)
 Install Flink 1.1.1 either locally or on a cluster. Installing it locally, means you just unzip/untar it in a directory and add FLINK_HOME/bin to your PATH.
+```
 flink run -q flink/build/libs/flink-1.0-all.jar --sentences file:///ABSOLUTE_PATH_TO/sentences.txt --truth file:///ABSOLUTE_PATH_TO/truth.txt --compress-key true --out file:///ABSOLUTE_PATH_TO/blocks --h 20 --r 4 --sk false --mbs 8
-4 is the number of workers you want to concurrently run when in local spark mode
+```
 
---sentences is the file that contains the sentences you want to generate LSH keys for
---truth is the truth file
--h is the number of hash functions to use for Minhash
--r is the number of rows (minhash values) you want in per hash key
--sk is if you want to use a new shifting key feature idea I came up with. If you know what an ngram is, then think of ngraming the minhash key (I'm seeing MUCH improved recall with better precision in my initial testing)
---compress-key is if you want to compress the LSH key down to a 23 character string. The more rows per band, the more savings this gives you. However, if you want smaller bands then this might actually increase the size of your key
---mbs max block size  or the max number of ids that can fit in a block. After that, the block is marked as oversized by clearing out all ids and replacing them with a -1
+**sentences** is the file that contains the sentences you want to generate LSH keys for
+**truth** is the truth file
+**h** is the number of hash functions to use for Minhash
+**r** is the number of rows (minhash values) you want in per hash key
+**sk** is if you want to use a new shifting key feature idea I came up with. If you know what an ngram is, then think of ngraming the minhash key (I'm seeing MUCH improved recall with better precision in my initial testing)
+**compress-key** is if you want to compress the LSH key down to a 23 character string. The more rows per band, the more savings this gives you. However, if you want smaller bands then this might actually increase the size of your key
+**mbs** max block size  or the max number of ids that can fit in a block. After that, the block is marked as oversized by clearing out all ids and replacing them with a -1
 
 # Testing things out via Spark
 Install Spark 2.0 either locally or on a cluster. Installing it locally, means you just unzip/untar it in a directory and add SPARK_INSTALL/bin to your PATH.
