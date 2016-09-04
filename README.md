@@ -79,27 +79,27 @@ Install Flink 1.1.1 either locally or on a cluster. Installing it locally, means
 flink run -q flink/build/libs/flink-1.0-all.jar --sentences file:///ABSOLUTE_PATH_TO/sentences.txt --truth file:///ABSOLUTE_PATH_TO/truth.txt --compress-key true --out file:///ABSOLUTE_PATH_TO/blocks --h 20 --r 4 --sk false --mbs 8
 ```
 
-**sentences** is the file that contains the sentences you want to generate LSH keys for
-**truth** is the truth file
-**h** is the number of hash functions to use for Minhash
-**r** is the number of rows (minhash values) you want in per hash key
-**sk** is if you want to use a new shifting key feature idea I came up with. If you know what an ngram is, then think of ngraming the minhash key (I'm seeing MUCH improved recall with better precision in my initial testing)
-**compress-key** is if you want to compress the LSH key down to a 23 character string. The more rows per band, the more savings this gives you. However, if you want smaller bands then this might actually increase the size of your key
-**mbs** max block size  or the max number of ids that can fit in a block. After that, the block is marked as oversized by clearing out all ids and replacing them with a -1
+**sentences** is the file that contains the sentences you want to generate LSH keys for<br>
+**truth** is the truth file<br>
+**h** is the number of hash functions to use for Minhash<br>
+**r** is the number of rows (minhash values) you want in per hash key<br>
+**sk** is if you want to use a new shifting key feature idea I came up with. If you know what an ngram is, then think of ngraming the minhash key (I'm seeing MUCH improved recall with better precision in my initial testing)<br>
+**compress-key** is if you want to compress the LSH key down to a 23 character string. The more rows per band, the more savings this gives you. However, if you want smaller bands then this might actually increase the size of your key<br>
+**mbs** max block size  or the max number of ids that can fit in a block. After that, the block is marked as oversized by clearing out all ids and replacing them with a -1<br>
 
 # Testing things out via Spark
 Install Spark 2.0 either locally or on a cluster. Installing it locally, means you just unzip/untar it in a directory and add SPARK_INSTALL/bin to your PATH.
 ```
 spark-submit --master local[4] spark/build/libs/spark-1.0-all.jar data/sentences.txt data/truth.txt 40 5 true false 256
 ```
-4 is the number of workers you want to concurrently run when in local spark mode.<br>
-data/sentences.txt is the file that contains the sentences you want to generate LSH keys for.<br>
-data/truth.txt is the truth file.<br>
-40 is the number of hash functions to use for Minhash.<br>
-5 is the number of rows (minhash values) you want in per hash key.<br>
-true/false is if you want to use a new shifting key feature idea I came up with. If you know what an ngram is, then think of ngraming the minhash key.<br>
-true/false is if you want to compress the LSH key down to a 23 character string. The more rows per band, the more savings this gives you. However, if you want smaller bands then this might actually increase the size of your key.<br>
-256 is the max number of ids that can fit in a block. After that, the block is marked as oversized by clearing out all ids and replacing them with a -1.<br>
+**4** is the number of workers you want to concurrently run when in local spark mode.<br>
+**data/sentences.txt** is the file that contains the sentences you want to generate LSH keys for.<br>
+**data/truth.txt** is the truth file.<br>
+**40** is the number of hash functions to use for Minhash.<br>
+**5** is the number of rows (minhash values) you want in per hash key.<br>
+**true/false** is if you want to use a new shifting key feature idea I came up with. If you know what an ngram is, then think of ngraming the minhash key.<br>
+**true/false** is if you want to compress the LSH key down to a 23 character string. The more rows per band, the more savings this gives you. However, if you want smaller bands then this might actually increase the size of your key.<br>
+**256** is the max number of ids that can fit in a block. After that, the block is marked as oversized by clearing out all ids and replacing them with a -1.<br>
 
 The output looks like:
 
