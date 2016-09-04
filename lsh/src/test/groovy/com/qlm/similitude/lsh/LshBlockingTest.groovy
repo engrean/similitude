@@ -66,25 +66,9 @@ class LshBlockingTest extends Specification {
 
     where:
     expected  | v1 | v2 | v3 | v4
-    'MC0wLTAtMA' | 0  | 0  | 0  | 0
-    'OS05LTktOQ' | 9  | 9  | 9  | 9
-    'YS0wLTEtYg' | 10 | 0  | 1  | 11
-  }
-
-  def 'bandToString'() {
-    given:
-    lshBlocking = new LshBlocking(12, 2, false, true)
-    when:
-    def hash = lshBlocking.bandToString([v1, v2, v3, v4] as int[])
-
-    then:
-    hash == expected
-
-    where:
-    expected  | v1 | v2 | v3 | v4
-    'MC0wLTAtMA' | 0  | 0  | 0  | 0
-    'OS05LTktOQ' | 9  | 9  | 9  | 9
-    'YS0wLTEtYg' | 10 | 0  | 1  | 11
+    'GJQrdBBfioZbQr0V2dKCiA' | 0  | 0  | 0  | 0
+    'sAi6wxULIhmRZAN2ljYEAg' | 9  | 9  | 9  | 9
+    '1qY4WDoQYuMeROGpWVuHlA' | 10 | 0  | 1  | 11
   }
 
   def 'lsh 3 hashes 2 rows shiftKey'() {
@@ -107,12 +91,8 @@ class LshBlockingTest extends Specification {
     def lsh = new LshBlocking(9, 7, true, false)
 
     when:
-    int[] minHash = lsh.minHash([2, 3, 4, 5, 1, 2, 3] as int[])
-    def mhBlocks = lsh.bandToString(minHash)
     int[][] lshBlocks = lsh.lsh([2, 3, 4, 5, 1, 2, 3] as int[])
     def bands = lsh.bandsToStrings(lshBlocks).asList()
-    println mhBlocks
-    println bands
 
     then:
     bands.size() == 3

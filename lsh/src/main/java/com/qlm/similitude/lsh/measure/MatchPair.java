@@ -1,11 +1,18 @@
-package com.qlm.similitude.spark.rdd;
+package com.qlm.similitude.lsh.measure;
 
-import scala.Serializable;
+import java.io.Serializable;
 
 public class MatchPair implements Serializable {
   final public Double jaccardScore;
   final public boolean blockFound;
   final public boolean truthFound;
+
+  public MatchPair(String line) {
+    String[] parts = line.split("\\|");
+    jaccardScore = Double.parseDouble(parts[0]);
+    blockFound = Boolean.parseBoolean(parts[1]);
+    truthFound = Boolean.parseBoolean(parts[2]);
+  }
 
   public MatchPair(Double jaccardScore, boolean blockFound, boolean truthFound) {
     this.jaccardScore = jaccardScore;
@@ -33,4 +40,3 @@ public class MatchPair implements Serializable {
     return jaccardScore + "|" + blockFound + "|" + truthFound;
   }
 }
-

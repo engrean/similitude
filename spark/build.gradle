@@ -19,7 +19,9 @@ description = "Spark for blocking similar sets together"
 dependencies {
   compile('com.google.guava:guava:18.0')
   compileOnly('org.apache.spark:spark-core_2.11:2.0.0')
+  compileOnly('org.apache.spark:spark-sql_2.11:2.0.0')
   testCompile('org.apache.spark:spark-core_2.11:2.0.0')
+  testCompile('org.apache.spark:spark-sql_2.11:2.0.0')
 }
 
 //noinspection GroovyAssignabilityCheck

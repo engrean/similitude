@@ -35,3 +35,9 @@ project(':spark') {
     compile project(':lsh')
   }
 }
+
+project(':flink') {
+  dependencies {
+    compile project(':lsh')
+  }
+}
