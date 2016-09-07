@@ -1,7 +1,7 @@
 package com.qlm.similitude.spark;
 
 import com.qlm.similitude.lsh.measure.MatchPair;
-import com.qlm.similitude.lsh.measure.PRStats;
+import com.qlm.similitude.lsh.measure.Stats;
 import com.qlm.similitude.spark.functions.GeneratePairs;
 import com.qlm.similitude.spark.functions.LshBlock;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -83,7 +83,9 @@ import java.util.Map;
       })
       .countByValue();
 
-    System.out.println(PRStats.getPrStats(matches));
+    String[] res = Stats.getPrStats(matches);
+    System.out.println(res[0]);
+    System.out.println(res[1]);
     sc.stop();
   }
 

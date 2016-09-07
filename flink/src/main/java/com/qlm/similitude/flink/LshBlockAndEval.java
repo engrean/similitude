@@ -4,7 +4,8 @@ import com.qlm.similitude.flink.function.GeneratePairs;
 import com.qlm.similitude.flink.function.GroupSentenceIds;
 import com.qlm.similitude.flink.function.LshBlock;
 import com.qlm.similitude.lsh.measure.MatchPair;
-import com.qlm.similitude.lsh.measure.PRStats;
+import com.qlm.similitude.lsh.measure.Stats;
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -24,12 +25,16 @@ import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+
+import static com.qlm.similitude.lsh.measure.Stats.DEL;
 
 public class LshBlockAndEval {
 
   public static void main(String[] args) throws Exception {
     final ParameterTool params = ParameterTool.fromArgs(args);
     final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+    env.getConfig().disableSysoutLogging();
     env.getConfig().setGlobalJobParameters(params);
     final String sentencesIn = params.get("sentences");
     final String truthIn = params.get("truth");
@@ -41,14 +46,27 @@ public class LshBlockAndEval {
     final String out = params.get("out");
     final List<Tuple2<String, Long>> scoreLines = runJob(env, sentencesIn, truthIn, numHashFunctions, rowsPerBand, shiftKey, compressKey, maxBlockSize, out);
 
+    final JobExecutionResult results = env.getLastJobExecutionResult();
+    final TreeMap<Integer, Integer> blockCounts = results.getAccumulatorResult(GroupSentenceIds.BLOCK_SIZES);
     File outFile = new File(numHashFunctions+"-"+rowsPerBand+"-"+shiftKey+"-"+compressKey+".txt");
     try(BufferedWriter bw = new BufferedWriter(new FileWriter(outFile))){
-      String output = "\n# hashes: " + numHashFunctions + " rows per band: " + rowsPerBand + " shift key: " + shiftKey +"\n";
-      output += PRStats.getPrStats(getMatchPairs(scoreLines));
+      String header = "\n" + "# hashes" + DEL + "rows/band" + DEL + "max block size" + DEL + "lsh type" + DEL;
+      String row = "\n" + numHashFunctions + DEL + rowsPerBand + DEL + maxBlockSize + DEL+(shiftKey ? "shift" : "traditional") + DEL;
+      String[] res = Stats.getPrStats(getMatchPairs(scoreLines));
+      header += res[0];
+      row += res[1];
+      header += "num blocks" + DEL +"num oversize blocks" + DEL + "blocks of one" + DEL;
+      row += results.getAccumulatorResult(GroupSentenceIds.NUM_BLOCKS) + DEL;
+      row += results.getAccumulatorResult(GroupSentenceIds.OVERSIZE_BLOCKS) + DEL;
+      row += results.getAccumulatorResult(GroupSentenceIds.BLOCKS_OF_ONE) + DEL;
+
+      res = Stats.getBlockStats(blockCounts);
+      header += res[0] + "\n";
+      row += res[1] + "\n";
+      String output = header + row;
       System.out.println(output);
       bw.append(output);
     }
-
   }
 
   @SuppressWarnings("Convert2Lambda")
@@ -73,7 +91,6 @@ public class LshBlockAndEval {
           return new Tuple2<>(value.f0 + "|" + value.f1, value.f2);
         }
       })
-      .distinct()
       .union(sentencePairs)
       .groupBy(0)
       .reduceGroup(new GroupReduceFunction<Tuple2<String, Double>, Tuple2<String, Long>>() {
