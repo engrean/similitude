@@ -48,17 +48,17 @@ public class Stats {
     StringBuilder header = new StringBuilder();
     double precision = thousandths((double)totalFound / ( totalFound + wastedCompares ));
     double recall = thousandths((double)totalFound / (double)( totalNotFound + totalFound ));
-    header.append("precision").append(DEL).append("recall").append(DEL).append("recall nums").append(DEL);
+    header.append("precision").append(DEL).append("recall").append(DEL).append("found").append(DEL).append("truth").append(DEL);
     for (Double key: scores) {
       if (scorePrs.get(key).getScore() > -1.0) {
-        header.append(key).append(" recall").append(DEL).append(key).append(" recall nums").append(DEL);
+        header.append(key).append(" rec").append(DEL).append(key).append(" fnd").append(DEL).append(key).append(" truth").append(DEL);
       }
     }
-    sb.append(precision).append(DEL).append(recall).append(DEL).append(totalFound).append("/").append((totalNotFound+totalFound)).append(DEL);
+    sb.append(precision).append(DEL).append(recall).append(DEL).append(totalFound).append(DEL).append((totalNotFound+totalFound)).append(DEL);
     for (Double key: scores) {
       mc = scorePrs.get(key);
       if (mc.getScore() > -1.0) {
-        sb.append(mc.recall()).append(DEL).append(mc.getFound()).append(DEL).append(mc.getFound()).append("/").append(mc.getFound()+mc.getTruthNotFound()).append(DEL);
+        sb.append(mc.recall()).append(DEL).append(mc.getFound()).append(DEL).append(mc.getFound()+mc.getTruthNotFound()).append(DEL);
       }
     }
     //Returning an array with header and output is hacky
@@ -75,7 +75,7 @@ public class Stats {
     Double ninetynine = tenths(HistogramStatistics.percentile(blockCounts, 0.99));
     Double threenines = tenths(HistogramStatistics.percentile(blockCounts, 0.999));
     Integer max = blockCounts.keySet().stream().max((o1, o2)->( o1 > o2 ? 1 : ( o1 < o2 ? -1 : 0))).get();
-    String header = "10th" + DEL + "25th" + DEL + "50th" + DEL + "75th" + DEL + "99th" + DEL + "99.9th" + DEL + "max" + DEL + "average";
+    String header = "10%" + DEL + "25%" + DEL + "50%" + DEL + "75%" + DEL + "99%" + DEL + "99.9%" + DEL + "max" + DEL + "avg";
     String data = ten + DEL + twentyfive + DEL + fifty + DEL + seventyfive + DEL + ninetynine + DEL + threenines + DEL + max + DEL + avg;
     //Returning an array with header and output is hacky
     return new String[]{header, data};

@@ -10,9 +10,9 @@ import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.api.java.io.CsvReader;
 import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.operators.DistinctOperator;
+import org.apache.flink.api.java.operators.MapOperator;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -44,36 +44,40 @@ public class LshBlockAndEval {
     final Boolean compressKey = Boolean.parseBoolean(params.get("ck"));
     final Integer maxBlockSize = Integer.parseInt(params.get("mbs"));
     final String out = params.get("out");
-    final List<Tuple2<String, Long>> scoreLines = runJob(env, sentencesIn, truthIn, numHashFunctions, rowsPerBand, shiftKey, compressKey, maxBlockSize, out);
+
+    final DataSource<Tuple2<Integer, String>> sentences = getSentences(env, sentencesIn);
+
+    final MapOperator<Tuple3<Integer, Integer, Double>, Tuple2<String, Double>> truth = getTruth(env, truthIn);
+
+    final List<Tuple2<String, Long>> scoreLines = runJob(env, numHashFunctions, rowsPerBand, sentences, truth, shiftKey, compressKey, maxBlockSize, out);
 
     final JobExecutionResult results = env.getLastJobExecutionResult();
     final TreeMap<Integer, Integer> blockCounts = results.getAccumulatorResult(GroupSentenceIds.BLOCK_SIZES);
     File outFile = new File(numHashFunctions+"-"+rowsPerBand+"-"+shiftKey+"-"+compressKey+".txt");
     try(BufferedWriter bw = new BufferedWriter(new FileWriter(outFile))){
-      String header = "\n" + "# hashes" + DEL + "rows/band" + DEL + "max block size" + DEL + "lsh type" + DEL;
-      String row = "\n" + numHashFunctions + DEL + rowsPerBand + DEL + maxBlockSize + DEL+(shiftKey ? "shift" : "traditional") + DEL;
+      String header = "hashes" + DEL + "rows" + DEL + "mbs" + DEL + "lsh type" + DEL;
+      String row = numHashFunctions + DEL + rowsPerBand + DEL + maxBlockSize + DEL+(shiftKey ? "shift" : "trad") + DEL;
       String[] res = Stats.getPrStats(getMatchPairs(scoreLines));
       header += res[0];
       row += res[1];
-      header += "num blocks" + DEL +"num oversize blocks" + DEL + "blocks of one" + DEL;
-      row += results.getAccumulatorResult(GroupSentenceIds.NUM_BLOCKS) + DEL;
-      row += results.getAccumulatorResult(GroupSentenceIds.OVERSIZE_BLOCKS) + DEL;
-      row += results.getAccumulatorResult(GroupSentenceIds.BLOCKS_OF_ONE) + DEL;
-
+      header += "# blocks" + DEL +"# oversize blocks" + DEL + "blocks of 1" + DEL;
+      row += results.getAccumulatorResult(GroupSentenceIds.NUM_BLOCKS).toString();
+      row += DEL + results.getAccumulatorResult(GroupSentenceIds.OVERSIZE_BLOCKS).toString();
+      row += DEL + results.getAccumulatorResult(GroupSentenceIds.BLOCKS_OF_ONE).toString() + DEL;
       res = Stats.getBlockStats(blockCounts);
       header += res[0] + "\n";
       row += res[1] + "\n";
       String output = header + row;
+      System.out.println();
       System.out.println(output);
       bw.append(output);
     }
   }
 
-  @SuppressWarnings("Convert2Lambda")
-  private static List<Tuple2<String, Long>> runJob(ExecutionEnvironment env, String sentencesIn, String truthIn, Integer numHashFunctions, Integer rowsPerBand,
-                                                   Boolean shiftKey, Boolean compressKey, Integer maxBlockSize, String out) throws Exception {
-    final CsvReader sentenceReader = env.readCsvFile(sentencesIn).includeFields(true, true);
-    DataSource<Tuple2<Integer, String>> sentences = sentenceReader.types(Integer.class, String.class);
+  private static List<Tuple2<String, Long>> runJob(ExecutionEnvironment env, Integer numHashFunctions, Integer rowsPerBand, DataSource<Tuple2<Integer, String>> sentences,
+                                                   MapOperator<Tuple3<Integer, Integer, Double>, Tuple2<String, Double>> truth, Boolean shiftKey, Boolean compressKey,
+                                                   Integer maxBlockSize, String out) throws Exception {
+
     final DistinctOperator<Tuple2<String, Double>> sentencePairs = sentences
       .flatMap(new LshBlock(numHashFunctions, rowsPerBand, shiftKey, compressKey))
       .groupBy(0)
@@ -84,13 +88,7 @@ public class LshBlockAndEval {
     sentences.writeAsText(out, FileSystem.WriteMode.OVERWRITE);
 
     env.execute();
-    final CsvReader truthReader = env.readCsvFile(truthIn).fieldDelimiter("\t").includeFields(true, true, true, false);
-    return truthReader.types(Integer.class, Integer.class, Double.class)
-      .map(new MapFunction<Tuple3<Integer,Integer,Double>, Tuple2<String, Double>>() {
-        @Override public Tuple2<String, Double> map(Tuple3<Integer, Integer, Double> value) throws Exception {
-          return new Tuple2<>(value.f0 + "|" + value.f1, value.f2);
-        }
-      })
+    return truth
       .union(sentencePairs)
       .groupBy(0)
       .reduceGroup(new GroupReduceFunction<Tuple2<String, Double>, Tuple2<String, Long>>() {
@@ -113,6 +111,27 @@ public class LshBlockAndEval {
     .groupBy(0)
     .sum(1)
     .collect();
+  }
+
+  @SuppressWarnings("Convert2Lambda")
+  private static MapOperator<Tuple3<Integer, Integer, Double>, Tuple2<String, Double>> getTruth(ExecutionEnvironment env, String truthIn) {
+    return env.readCsvFile(truthIn).fieldDelimiter("\t")
+       .includeFields(true, true, true, false)
+       .types(Integer.class, Integer.class, Double.class)
+       .map(
+         new MapFunction<Tuple3<Integer, Integer, Double>, Tuple2<String,
+           Double>>() {
+           @Override public Tuple2<String, Double> map(
+             Tuple3<Integer, Integer, Double> value) throws Exception {
+             return new Tuple2<>(value.f0 + "|" + value.f1, value.f2);
+           }
+         });
+  }
+
+  private static DataSource<Tuple2<Integer, String>> getSentences(ExecutionEnvironment env, String sentencesIn) {
+    return env.readCsvFile(sentencesIn)
+                                                               .includeFields(true, true)
+                                                               .types(Integer.class, String.class);
   }
 
   private static Map<MatchPair, Long> getMatchPairs(List<Tuple2<String, Long>> matchLines) {
