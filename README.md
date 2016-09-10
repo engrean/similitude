@@ -83,8 +83,8 @@ Install Flink 1.1.1 either locally or on a cluster. Installing it locally, means
 **r** is the number of rows (minhash values) you want in per hash key. <br>
 **ck** if you want to compress the LSH key down to a 23 character string. The more rows per band, the more savings this gives you. However, if you want smaller bands then this might actually increase the size of your key<br>
 **mbs** max block size  or the max number of ids that can fit in a block. After that, the block is marked as oversized by clearing out all ids and replacing them with a -1<br>
-**runs** the number of runs you want to do for each row-band. For example, if you set r to 3 and runs to 4, then it will run 3 hashes 3 row-bands, 6 hashes 3 row-bands, 9 hahses 3 row-bands and 12 hashes 3 row-bands jobs. 
-**mrb** max rows per block. This is essentially the stopping point on the number of rows-per-band you want the job to stop at. 
+**runs** the number of runs you want to do for each row-band. For example, if you set r to 3 and runs to 4, then it will run 3 hashes 3 row-bands, 6 hashes 3 row-bands, 9 hahses 3 row-bands and 12 hashes 3 row-bands jobs.<br> 
+**mrb** max rows per block. This is essentially the stopping point on the number of rows-per-band you want the job to stop at.<br>
 
 # Testing things out via Spark
 Install Spark 2.0 either locally or on a cluster. Installing it locally, means you just unzip/untar it in a directory and add SPARK_INSTALL/bin to your PATH.
