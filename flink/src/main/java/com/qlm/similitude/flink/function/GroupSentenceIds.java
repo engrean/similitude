@@ -40,7 +40,6 @@ public class GroupSentenceIds extends RichGroupReduceFunction<Tuple2<String, Int
     numBlocks.add(1);
     boolean oversizedBlock = false;
     for (Tuple2<String, Integer> value : values) {
-      System.out.println(value.f0);
       if (count++ > maxBlockSize) {
         ids.clear();
         ids.add(-1);

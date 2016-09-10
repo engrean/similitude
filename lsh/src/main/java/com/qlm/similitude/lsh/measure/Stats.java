@@ -48,13 +48,13 @@ public class Stats {
     StringBuilder header = new StringBuilder();
     double precision = thousandths((double)totalFound / ( totalFound + wastedCompares ));
     double recall = thousandths((double)totalFound / (double)( totalNotFound + totalFound ));
-    header.append("precision").append(DEL).append("recall").append(DEL).append("found").append(DEL).append("truth").append(DEL);
+    header.append("precision").append(DEL).append("recall").append(DEL).append("found").append(DEL).append("truth").append(DEL).append("compares").append(DEL);
     for (Double key: scores) {
       if (scorePrs.get(key).getScore() > -1.0) {
         header.append(key).append(" rec").append(DEL).append(key).append(" fnd").append(DEL).append(key).append(" truth").append(DEL);
       }
     }
-    sb.append(precision).append(DEL).append(recall).append(DEL).append(totalFound).append(DEL).append((totalNotFound+totalFound)).append(DEL);
+    sb.append(precision).append(DEL).append(recall).append(DEL).append(totalFound).append(DEL).append((totalNotFound+totalFound)).append(DEL).append(totalFound + wastedCompares).append(DEL);
     for (Double key: scores) {
       mc = scorePrs.get(key);
       if (mc.getScore() > -1.0) {
