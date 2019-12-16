@@ -24,20 +24,14 @@ subprojects {
     }
 }
 
-project(':kafka-streams') {
-  dependencies {
-    compile project(':lsh')
-  }
-}
-
 project(':spark') {
   dependencies {
     compile project(':lsh')
   }
 }
 
-project(':flink') {
-  dependencies {
-    compile project(':lsh')
-  }
-}
+//project(':flink') {
+//  dependencies {
+//    compile project(':lsh')
+//  }
+//}

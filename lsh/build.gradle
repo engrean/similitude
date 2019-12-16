@@ -5,7 +5,8 @@ version = "1.0"
 
 description = "LSH for blocking similar sets together. It includes tools for generating data, a truthset, "
 dependencies {
-  compile('com.google.guava:guava:18.0')
+  compile('com.google.guava:guava:20.0')
+  compile('commons-codec:commons-codec:1.10')
 }
 
 //noinspection GroovyAssignabilityCheck

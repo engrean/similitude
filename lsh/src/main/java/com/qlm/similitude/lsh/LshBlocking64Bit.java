@@ -14,10 +14,10 @@ import java.util.*;
  * <p/>
  * NOTE: Must be Serializable for Spark.
  */
-public class LshBlocking implements Serializable, LshBlockAsString {
+public class LshBlocking64Bit implements Serializable, LshBlockAsString {
 
   private HashFunction hf;
-//  private static final HashFunction murmur3 = Hashing.murmur3_32();
+//  private static final HashFunction murmur3 = Hashing.murmur3_128();
   private static final HashFunction md5 = Hashing.md5();
   private static final BaseEncoding encoder = BaseEncoding.base64().omitPadding();
   private static final Charset UTF8 = Charset.defaultCharset();
@@ -28,14 +28,7 @@ public class LshBlocking implements Serializable, LshBlockAsString {
   private final boolean shiftKey;
   private final boolean compressKey;
 
-  public LshBlocking(int numHashFunctions, int numBands) {
-    this(numHashFunctions, numHashFunctions/numBands, false, false, "murmur3");
-    if (numHashFunctions % numBands > 0) {
-      throw new IllegalArgumentException("The the number of hash functions must be evenly divisible by the number of bands");
-    }
-  }
-
-  public LshBlocking(int numHashFunctions, int numRowsPerBand, boolean shiftKey, boolean compressKey, String hashFunction) {
+  public LshBlocking64Bit(int numHashFunctions, int numRowsPerBand, boolean shiftKey, boolean compressKey, String hashAlgorithm) {
     this.compressKey = compressKey;
     this.shiftKey = shiftKey;
     this.numHashFunctions = numHashFunctions;
@@ -45,12 +38,11 @@ public class LshBlocking implements Serializable, LshBlockAsString {
     for (int i = 0; i < numHashFunctions - 1; i++) {
       hashFunctions[i] = random.nextInt() + 1;
     }
-    if (hashFunction.equalsIgnoreCase("SHA256")) {
+    if (hashAlgorithm.equalsIgnoreCase("SHA256")) {
       hf = Hashing.sha256();
-    } else if (hashFunction.equalsIgnoreCase("murmur3")) {
-      hf = Hashing.murmur3_32();
+    } else if (hashAlgorithm.equalsIgnoreCase("murmur3")) {
+      hf = Hashing.murmur3_128();
     }
-
   }
 
   @Override
@@ -64,9 +56,9 @@ public class LshBlocking implements Serializable, LshBlockAsString {
    * @param values the values to LSH
    * @return a two dimensional array where the first dimension is the band and the second dimension is the minhash rows for that band
    */
-  public int[][] lsh(int[] values) {
+  public long[][] lsh(long[] values) {
 
-    int[] minHash = minHash(values);
+    long[] minHash = minHash(values);
 
     int numBands;
     if (shiftKey) {
@@ -74,7 +66,7 @@ public class LshBlocking implements Serializable, LshBlockAsString {
     } else {
       numBands = numHashFunctions/numRowsPerBand;
     }
-    int[][] lsh = new int[numBands][numRowsPerBand];
+    long[][] lsh = new long[numBands][numRowsPerBand];
 
     if (numBands == 1) {
       lsh[0] = minHash;
@@ -83,13 +75,13 @@ public class LshBlocking implements Serializable, LshBlockAsString {
         lsh[i] = Arrays.copyOfRange(minHash, i, numRowsPerBand+i);
       }
     } else {
-        int[] tmpHash = new int[numRowsPerBand];
+        long[] tmpHash = new long[numRowsPerBand];
         int row = 0;
         for (int i = 0; i < numHashFunctions; i++) {
           tmpHash[i % numRowsPerBand] = minHash[i];
           if (i % numRowsPerBand == numRowsPerBand - 1) {
             lsh[row++] = tmpHash;
-            tmpHash = new int[numRowsPerBand];
+            tmpHash = new long[numRowsPerBand];
           }
         }
     }
@@ -102,8 +94,8 @@ public class LshBlocking implements Serializable, LshBlockAsString {
    * @param values the values to minHash on
    * @return An array of ints where the first int is the minimum of the actual values and the last value is the minimun of the last hash function
    */
-  public int[] minHash(int[] values) {
-    int[] minHash = new int[numHashFunctions];
+  public long[] minHash(long[] values) {
+    long[] minHash = new long[numHashFunctions];
     for (int i = 0; i < numHashFunctions; i++) {
       minHash[i] = minHashN(values, i);
     }
@@ -116,12 +108,16 @@ public class LshBlocking implements Serializable, LshBlockAsString {
    * @param values The String value to hash
    * @return An array of hash values
    */
-  public int[] hashValues(String...values) {
-    int[] valueHashes = new int[values.length];
+  public long[] hashValues(String...values) {
+    long[] valueHashes = new long[values.length];
     for (int i = 0; i<values.length; i++){
-      valueHashes[i] = hf.hashString(values[i], UTF8).asInt();
+      valueHashes[i] = hashString(values[i]);
     }
     return valueHashes;
+  }
+
+  private long hashString(String str) {
+    return hf.hashString(str, UTF8).asLong();
   }
 
   /**
@@ -131,11 +127,11 @@ public class LshBlocking implements Serializable, LshBlockAsString {
    * @param hashFunction The hash function number to use. <code>0</code> results in finding the minimum from the values passed in
    * @return The minimum hash for the values
    */
-  protected int minHashN(int[] values, int hashFunction) {
-    int min = Integer.MAX_VALUE;
-    int minVal = 0;
-    int tmpVal;
-    for (int value : values) {
+  protected long minHashN(long[] values, int hashFunction) {
+    long min = Long.MAX_VALUE;
+    long minVal = 0;
+    long tmpVal;
+    for (long value : values) {
       tmpVal = getHash(value, hashFunction);
       if (tmpVal < min) {
         min = tmpVal;
@@ -152,33 +148,33 @@ public class LshBlocking implements Serializable, LshBlockAsString {
    * @param hashFunction the hash function to use
    * @return a hashCode of the given value
    */
-  protected int getHash(int value, int hashFunction) {
+  protected long getHash(long value, int hashFunction) {
     //For the first hash function, simply return the value
     if (hashFunction == 0) {
       return value;
     }
-    int rst = (value >>> hashFunction) | (value << (Integer.SIZE - hashFunction));
+    long rst = (value >>> hashFunction) | (value << (Integer.SIZE - hashFunction));
     return rst ^ hashFunctions[hashFunction - 1];
   }
 
-  List<String> bandsToStrings(int[][] lsh) {
+  List<String> bandsToStrings(long[][] lsh) {
     List<String> vals = new ArrayList<>();
     if (lsh != null) {
-      for (int[] band : lsh) {
+      for (long[] band : lsh) {
         vals.add(bandToString(band));
       }
     }
     return vals;
   }
 
-  String bandToString(int[] hashCodes) {
+  String bandToString(long[] hashCodes) {
     StringBuilder builder = new StringBuilder();
     if (hashCodes != null) {
-      for (int i : hashCodes) {
+      for (long i : hashCodes) {
         if (builder.length() > 0) {
           builder.append("-");
         }
-        builder.append(Integer.toHexString(i));
+        builder.append(Long.toHexString(i));
       }
     }
     String s = builder.toString();

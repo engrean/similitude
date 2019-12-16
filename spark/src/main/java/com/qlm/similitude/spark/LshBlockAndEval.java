@@ -1,5 +1,8 @@
 package com.qlm.similitude.spark;
 
+import com.qlm.similitude.lsh.LshBlockAsString;
+import com.qlm.similitude.lsh.LshBlocking;
+import com.qlm.similitude.lsh.LshBlocking64Bit;
 import com.qlm.similitude.lsh.measure.MatchPair;
 import com.qlm.similitude.lsh.measure.Stats;
 import com.qlm.similitude.spark.functions.GeneratePairs;
@@ -23,18 +26,26 @@ import java.util.Map;
 
     final String sentencesIn = args[0];
     final String truthIn = args[1];
-    final Integer numHashFunctions = Integer.parseInt(args[2]);
-    final Integer rowsPerBand = Integer.parseInt(args[3]);
-    final Boolean shiftKey = Boolean.parseBoolean(args[4]);
-    final Boolean compressKey = Boolean.parseBoolean(args[5]);
-    final Integer maxBlockSize = Integer.parseInt(args[6]);
+    final int numHashFunctions = Integer.parseInt(args[2]);
+    final int rowsPerBand = Integer.parseInt(args[3]);
+    final boolean shiftKey = Boolean.parseBoolean(args[4]);
+    final boolean compressKey = Boolean.parseBoolean(args[5]);
+    final int maxBlockSize = Integer.parseInt(args[6]);
+    final boolean use64Bit = Boolean.parseBoolean(args[7]);
+    final String hashAlgorithm = args[8];
     final SparkSession spark = SparkSession.builder().appName("LSH Eval").config("header", true).getOrCreate();
 
+    LshBlockAsString lshBlocker;
+    if (use64Bit) {
+      lshBlocker = new LshBlocking64Bit(numHashFunctions, rowsPerBand, shiftKey, compressKey, hashAlgorithm);
+    } else {
+      lshBlocker = new LshBlocking(numHashFunctions, rowsPerBand, shiftKey, compressKey, hashAlgorithm);
+    }
 
     final JavaSparkContext sc = JavaSparkContext.fromSparkContext(spark.sparkContext());
     final JavaRDD<String> sentences = sc.textFile(sentencesIn);
     final JavaPairRDD<String, List<Integer>> lshBlocks = sentences
-      .flatMapToPair(new LshBlock(numHashFunctions, rowsPerBand, shiftKey, compressKey))
+      .flatMapToPair(new LshBlock(lshBlocker))
       .groupByKey()
       .mapToPair((PairFunction<Tuple2<String, Iterable<Integer>>, String, List<Integer>>)blockKey->{
         List<Integer> docIds = new ArrayList<>();
@@ -69,7 +80,7 @@ import java.util.Map;
       .map((Function<Tuple2<String, Iterable<Double>>, MatchPair>)truthAndBlock->{
         boolean blockFound = false;
         boolean truthFound = false;
-        Double score = -1.0;
+        double score = -1.0;
         for (Double d: truthAndBlock._2()) {
           if (d == -1) {
             blockFound = true;

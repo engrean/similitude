@@ -1,5 +1,7 @@
 package com.qlm.similitude.spark.functions
 
+import com.qlm.similitude.lsh.LshBlockAsString
+import com.qlm.similitude.lsh.LshBlocking
 import spock.lang.Specification
 import scala.Tuple2;
 
@@ -8,7 +10,8 @@ class LshBlockTest extends Specification {
 
   def 'generate lsh blocks in shifting the key'() {
     given:
-    LshBlock lshBlock = new LshBlock(9, 7, true, false);
+    LshBlockAsString block = new LshBlocking(9, 7, true, false, "murmur3")
+    LshBlock lshBlock = new LshBlock(block);
     when:
     List<Tuple2<String, Integer>> blocks = new ArrayList<>(lshBlock.call("0,one two three four five sixe seven eight nine ten eleven").collect())
     println blocks
@@ -21,7 +24,8 @@ class LshBlockTest extends Specification {
 
   def 'generate lsh blocks in traditional way'() {
     given:
-    LshBlock lshBlock = new LshBlock(9, 3, false, false);
+    LshBlockAsString block = new LshBlocking(9, 3, false, false, "murmur3")
+    LshBlock lshBlock = new LshBlock(block);
     when:
     List<Tuple2<String, Integer>> blocks = new ArrayList<>(lshBlock.call("0,one two three four").collect())
     then:

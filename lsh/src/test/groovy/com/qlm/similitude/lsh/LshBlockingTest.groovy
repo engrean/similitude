@@ -1,12 +1,14 @@
 package com.qlm.similitude.lsh
 
-import spock.lang.Specification
+import com.qlm.similitude.lsh.LshBlockAsString
+import com.qlm.similitude.lsh.LshBlocking
 
+import spock.lang.Specification
 
 class LshBlockingTest extends Specification {
 
-  LshBlocking lshBlocking = new LshBlocking(12, 2, false, false)
-
+  LshBlockAsString lshBlocking = new LshBlocking(12, 2, false, false, "murmur3")
+ 
   def 'bandsToString null'() {
     when:
     def hash = lshBlocking.bandsToStrings(null)
@@ -41,7 +43,7 @@ class LshBlockingTest extends Specification {
 
   def 'bandToString not compressed'() {
     given:
-    lshBlocking = new LshBlocking(12, 12, false, false)
+    lshBlocking = new LshBlocking(12, 12, false, false, "murmur3")
     when:
     def hash = lshBlocking.bandToString([v1, v2, v3, v4] as int[])
 
@@ -57,7 +59,7 @@ class LshBlockingTest extends Specification {
 
   def 'bandToString compressed'() {
     given:
-    lshBlocking = new LshBlocking(12, 2, false, true)
+    lshBlocking = new LshBlocking(12, 2, false, true, "murmur3")
     when:
     def hash = lshBlocking.bandToString([v1, v2, v3, v4] as int[])
 
@@ -72,7 +74,7 @@ class LshBlockingTest extends Specification {
   }
 
   def 'lsh 3 hashes 2 rows shiftKey'() {
-    def lsh = new LshBlocking(3, 2, true, true)
+    def lsh = new LshBlocking(3, 2, true, true, "murmur3")
 
     when:
     int[][] minHash = lsh.lsh([2, 3, 4, 5, 1, 2, 3] as int[])
@@ -88,7 +90,7 @@ class LshBlockingTest extends Specification {
   }
 
   def 'lsh 9 hashes 7 rows shiftKey'() {
-    def lsh = new LshBlocking(9, 7, true, false)
+    def lsh = new LshBlocking(9, 7, true, false, "murmur3")
 
     when:
     int[][] lshBlocks = lsh.lsh([2, 3, 4, 5, 1, 2, 3] as int[])

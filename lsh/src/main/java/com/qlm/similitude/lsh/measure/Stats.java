@@ -8,7 +8,7 @@ public class Stats {
   public static final String DEL = "\t";
   private static final DecimalFormat tenthsFormatter = new DecimalFormat("#.#");
   private static final DecimalFormat hundredthsFormatter = new DecimalFormat("#.##");
-  private static final DecimalFormat thousandsPrecisionFormatter = new DecimalFormat("#.###");
+  private static final DecimalFormat thousandsPrecisionFormatter = new DecimalFormat("#.####");
 
   public static String[] getPrStats(Map<MatchPair, Long> stats) {
     Map<Double, MatchCounts> scorePrs = new HashMap<>();

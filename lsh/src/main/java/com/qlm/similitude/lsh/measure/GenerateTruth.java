@@ -35,7 +35,7 @@ public class GenerateTruth {
     for (int i = start; i < sentences.size(); i++) {
       score = new JaccardSimilarity(xSet, xStart, sentences.get(i), i);
       if (score.getScore() >= minJaccardScore) {
-        bw.append(new JaccardSimilarity(xSet, xStart, sentences.get(i), i).toString()).append("\n");
+        bw.append(score.toString()).append("\n");
       }
     }
   }
@@ -49,7 +49,5 @@ public class GenerateTruth {
     }
     return sentences;
   }
-
-
 
 }

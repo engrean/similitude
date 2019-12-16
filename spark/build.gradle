@@ -14,21 +14,21 @@ defaultTasks 'shadowJar'
 
 version = "1.0"
 //noinspection GroovyUnusedAssignment
-mainClassName='com.qlm.similitude.spark.LshBlockAndEval'
+mainClassName='com.qlm.similitude.spark.Main'
 description = "Spark for blocking similar sets together"
 dependencies {
   compile('com.google.guava:guava:18.0')
-  compileOnly('org.apache.spark:spark-core_2.11:2.0.0')
-  compileOnly('org.apache.spark:spark-sql_2.11:2.0.0')
-  testCompile('org.apache.spark:spark-core_2.11:2.0.0')
-  testCompile('org.apache.spark:spark-sql_2.11:2.0.0')
+  compileOnly('org.apache.spark:spark-core_2.12:2.4.4')
+  compileOnly('org.apache.spark:spark-sql_2.12:2.4.4')
+  testCompile('org.apache.spark:spark-core_2.12:2.4.4')
+  testCompile('org.apache.spark:spark-sql_2.12:2.4.4')
 }
 
 //noinspection GroovyAssignabilityCheck
-jar {
-  manifest {
-    attributes (
-      'Main-Class': 'com.qlm.similitude.spark.measure.LshBlockAndEval'
-    )
-  }
-}
+//jar {
+//  manifest {
+//    attributes (
+//      'Main-Class': 'com.qlm.similitude.spark.measure.Main'
+//    )
+//  }
+//}

@@ -1,6 +1,5 @@
 include 'lsh'
 include 'spark'
-include 'flink'
-include 'kafka-streams'
+//include 'flink'
 
 rootProject.name = 'similitude'
